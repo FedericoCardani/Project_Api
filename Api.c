@@ -6,7 +6,7 @@
 #define INPUTSIZE 1024
 #define NEWROWS 30
 #define STACKSIZE 30
-#define debugUNDO 1
+#define debugUNDO 0
 #define debug 0
 
 /*typedef struct{
@@ -74,7 +74,8 @@ node* searchNode(node* head_list,int index);
 Stack_node* createStackNode(node* node,char instruction,int index1,int index2,Stack_node* stackNode);
 node* createList(node* head_list,int index1,int index2,node* next);
 node* createHead(node* newHead);
-
+void printRedoPoss(Stack_node* head);
+node* redoList(node* head_list,int index1,int index2,node* next,Stack_node* redoMem);
 
 //TODO: varie free e controllare certi undo che non fanno il loro lavoro
 
@@ -136,6 +137,8 @@ void operation(int index1, int index2, char o){
         case 'u' : undo(index1); break;
 
         case 'r' : redo(index1); break;
+
+        case 'z' : printRedoPoss(firstUndo); break;
 
         default:
             return;
@@ -210,6 +213,22 @@ void print(int index1, int index2){
 
 }
 
+void printRedoPoss(Stack_node* head){
+    Stack_node *curr = head;
+    node *helper= curr->mem;
+    int i=0;
+    for (int i = head->index1; i <= head->index2 && curr != NULL; ++i) {
+        while (helper != NULL) {
+            printf("%s,%d",helper->row,i);
+            helper = curr->mem->next;
+            i++;
+        }
+
+        curr = curr->next;
+    }
+
+}
+
 void undo(int nTimes){
     node* prev, *next, *lastMem;
     //leggo il first lo rimetto nella mia memoria e semmai lo sostituisco con uno nuovo
@@ -274,7 +293,7 @@ void undo(int nTimes){
 //redo undo al prossimo c o d rimetto a 0 il first
 
 void redo(int nTimes){
-    node* prev, *next, *lastMem;
+    node* prev, *next, *curr,*lastMem;
     for (int i = 0; i < nTimes ; ++i) {
 
         if (firstUndo != NULL) {
@@ -289,7 +308,7 @@ void redo(int nTimes){
                     first = createStackNode(NULL,firstUndo->instruction,firstUndo->index1,firstUndo->index2,first);
                 }
                 else{
-                    first = createStackNode(prev->next, firstUndo->instruction, firstUndo->index1, firstUndo->index1, first);
+                    first = createStackNode(prev->next, firstUndo->instruction, firstUndo->index1, firstUndo->index2, first);
 
                 }
                 prev->next = firstUndo->mem;
@@ -297,8 +316,19 @@ void redo(int nTimes){
                 //printf("qua?\n");
 
                 lastMem = searchNode(firstUndo->mem, firstUndo->index2 - firstUndo->index1);
-                if (lastMem != NULL) {
+               /*curr = redoList(head,firstUndo->index1,firstUndo->index2,next,firstUndo);
+
+               if(prev == head){
+                   head = curr;
+               } else{
+                   prev->next = curr;
+               }*/
+                if(debugUNDO)
+                    printf("%s",lastMem->row);
+                if(lastMem != NULL) {
                     lastMem->next = next;
+                } else{
+                    prev->next = lastMem;
                 }
 
                 //printf("%s\n", lastMem->row); //?
@@ -314,7 +344,7 @@ void redo(int nTimes){
                     first = createStackNode(NULL,firstUndo->instruction,firstUndo->index1,firstUndo->index2,first);
                 }
                 else{
-                    first = createStackNode(prev->next, firstUndo->instruction, firstUndo->index1, firstUndo->index1, first);
+                    first = createStackNode(prev->next, firstUndo->instruction, firstUndo->index1, firstUndo->index2, first);
 
                 }
                 prev->next = next;
@@ -411,6 +441,9 @@ node* searchNode(node *head_list,int index){
     }
     for (int i = 0; i < index && curr!= NULL; ++i) {
         curr = curr->next;
+        if(debugUNDO){
+            printf("%d\n",i);
+        }
     }
     return curr;
 
@@ -441,6 +474,36 @@ node* createList(node* head_list,int index1,int index2,node* next){
         return myHead;
     }
     return myHead->next;
+}
+
+node* redoList(node* head_list,int index1,int index2,node* next,Stack_node* redoMem){
+    node *myHead,*prev,*temp = redoMem->mem;
+    short code = 0;
+    char row[1024];
+
+    if(index1 == 1){
+        myHead = (node*)malloc(sizeof(node));
+        code= 1;
+    } else{
+        myHead = searchNode(head_list, index1 - 1);
+    }
+    prev = myHead;
+    for (int i = index1; i <= index2 && temp!= NULL; ++i) {   //search prev node -> next newNode etc
+
+        node* newNode = (node *) malloc(sizeof(node));
+        strcpy(row,temp->row);
+        strcpy(newNode->row,row);
+        newNode->next = NULL;
+        prev->next = newNode;
+        prev = prev->next;
+        temp = temp->next;
+    }
+    prev->next = next;
+   if(code){
+        return myHead;
+    }
+    return myHead->next;
+
 }
 
 Stack_node* createStackNode(node* node,char instruction,int index1,int index2,Stack_node* stackNode){
