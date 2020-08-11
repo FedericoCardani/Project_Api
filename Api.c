@@ -2,35 +2,50 @@
 #include <string.h>
 #include <stdlib.h>
 
-#define ROWSIZE 1024
-#define INPUTSIZE 30
-//#define NEWROWS 30
-//#define STACKSIZE 30
-//#define debugUNDO 0
-//#define debug 0
+#define INITARRAY 30
+#define INPUTSIZE 1028
 
 
-typedef struct node{
-    char row[ROWSIZE];
-    struct node* next;
-}node;
+//Stack_node *firstUndo = NULL;
 
-typedef struct Stack_node{
-    int index1; //gli offest
-    int index2;
-    char instruction;
-    node *mem;
-    struct Stack_node* next;
-}Stack_node;
+//contatore per le istruzioni nulle
+//puntatore per le stringhe
+//usare scanf! controllare 0,0d o 0,0c
+
+char** text;
+char** memory;
+char** undoList;
+char** logger;
+char input[INPUTSIZE];
+
+// OKAY
+//size_t arrsize = number;
 
 
-node *head = NULL; //head of the list
-Stack_node *first = NULL;  //LOGGER
-Stack_node *firstUndo = NULL; //how much undoDone
+//change the size -> realloc(text, arrSize * sizeof(int))
 
+//initialized array or malloc(numberEl* sizeof()int);
 
 
 
+// free(text)
+
+
+
+
+
+
+
+
+
+
+
+int used= 0;
+int size = INITARRAY;
+int sizeLog = 0;
+int lastCommand = 0;
+size_t lengthText = 0;
+size_t lengthLog = 0;
 
 void parsing(char* command);
 void changed(int index1, int index2);
@@ -39,326 +54,203 @@ void print(int index1, int index2);
 void undo(int nTimes);
 void redo(int nTimes);
 void operation(int index1, int index2, char o);
-node* searchNode(node* head_list,int index);
-Stack_node* createStackNode(node* node,char instruction,int index1,int index2,Stack_node* stackNode);
-node* createList(node* head_list,int index1,int index2,node* next);
 
 
 
 int main(){
-    char input[INPUTSIZE];
-   // createStack(STACKSIZE);
-    //head = (node*)malloc(sizeof(node));
-    //head = NULL;
-    //head->next = NULL;
-    //first = (Stack_node*)malloc(sizeof(Stack_node));
-   // first->mem->next = NULL;
-    //first = NULL;
-    //firstUndo = (Stack_node*)malloc(sizeof(Stack_node));
-    //firstUndo = NULL;
+    text = malloc(INITARRAY * sizeof(char*));
+    logger = malloc(INITARRAY * sizeof(char*));
 
 
     while (1) {
-        fgets(input, INPUTSIZE, stdin);
-        if(strcmp(input,"q\n") != 0)
-            parsing(input);
-        else
-            return 0;
+        fgets(input, INPUTSIZE,stdin);
+        parsing(input);
 
     }
-
-    //printf("Hello World!\n");
+    return 0;
 }
 
 void parsing(char* command){
-    int index1,index2= -1;
-    char decision, *parsed;
+    int index1=0,index2= 0,i,offset = 48,maxNum =57;
+    char decision;// *parsed1,*parsed2;
 
+    /*if(command[0] == 'q'){
+        end = 1;
+        return;                    //NOT USEFUL
+    }
     index1 = atoi(command);
     if(strchr(command,',') != NULL){
         parsed = strchr(command, ',');
-        strncpy(parsed,parsed,strlen(parsed)-2);
-        //printf("%d\n",strlen(++parsed)-2);
-        //printf("%s",parsed);
+       // strncpy(parsed,parsed,strlen(parsed)-2);
+
         index2 = atoi(++parsed);
-       // printf("%d\n",index2);
 
     }
+    /*
+    for (i = 0;command[i] < 9; ++i) {
+        index1 = 10*index1+command[i];
+    }
+    if(command[i]==','){
+       // index1 = index1- command[i];
+        //index1 = index1/10;
+        for (j = i+1; command[j]< 9; ++j) {
+            index2 = 10*index2+command[j];
+        }
+        index2 = index2 - command[j];
+        index2 = index2/10;
+        operation(index1,index2,command[j]);
 
-        //decision = strchr(command, ' ');
-        decision =  command[strlen(command)-2];
-        //printf("%c",decision);
+    }else{
+        index1 = index1 - command[i];
+        index1 = index1/10;
+        operation(index1,index2,command[i]);
+    }*/
+    for (i = 0; command[i] <= maxNum ; ++i) {
+        if(command[i] == ','){
+            index1 = index2;
+            index2 = 0;
+        } else{
+            index2 = index2*10 + (command[i]-offset);
+        }
+    }
+       // index2 = index2 - (command[--i] -offset);
+        decision = command[i];
         operation(index1, index2, decision);
+
 
 }
 
 void operation(int index1, int index2, char o){
     switch (o) {
+        case 'p' : print(index1,index2); break;
+
         case 'c' : changed(index1,index2); break;
 
         case 'd' : delete(index1,index2); break;
 
-        case 'p' : print(index1,index2); break;
+//        case 'u' : undo(index2); break;
 
-        case 'u' : undo(index1); break;
+  //      case 'r' : redo(index2); break;
 
-        case 'r' : redo(index1); break;
 
+        case 'q' : exit(0);  break;
 
         default:
-            return;
+            break;
     }
 }
 
 void changed(int index1,int index2) {
-        char row[ROWSIZE];
-        node *next,*prev,*curr;
-        prev = searchNode(head, index1 - 1);
-        next = searchNode(head, index2 + 1);
-        free(firstUndo);
-        //firstUndo->next = NULL;
-        firstUndo = NULL;
-        if(prev == NULL){
+    char point[3];  //fai una define sensata
+    char row[INPUTSIZE]; // richiamo questa parte più volte?!
 
-            first = createStackNode(NULL,'c',index1,index2,first);
-        }
-        else{
-            first = createStackNode(prev->next, 'c', index1, index2, first);
 
+    //save input than if rows > used then .
+   /* if(sizeLog == lastCommand){
+        sizeLog += INITARRAY;
+        logger = realloc(logger,sizeLog * sizeof(char*));
+
+    }
+
+    lengthLog += strlen(row)* sizeof(char);    //FIND OUT WHY +=
+    logger[lastCommand] = malloc (lengthLog);
+    strcpy(logger[lastCommand],input);
+    ++lastCommand;*/
+
+
+    for (int i = index1; i <= index2; ++i) {
+        fgets(row,INPUTSIZE,stdin);
+        if(i > size){
+            size += INITARRAY;
+            text = realloc(text,size * sizeof(char*));
         }
-    /*if(debugUNDO){
-        undoPossible++;
-        printf("%d",undoPossible);
-    }*/
-        curr = createList(head,index1,index2,next);
-        if(prev == head){
-            head = curr;
-        } else{
-            prev->next = curr;
-        }
-        //printf("%s",->next->row);
-        fgets(row,ROWSIZE,stdin);
+
+
+        // text = malloc(strlen(row) * sizeof(char));
+        lengthText += strlen(row)* sizeof(char);    //FIND OUT WHY +=
+        text[i] = malloc (lengthText);
+        strcpy(text[i],row);
+        //++used;
+
+    }
+    if(index2> used)
+        used = index2;
+    fgets(point,3,stdin);
 }
-//COMANDI INUTILI FARE UNDO
-void delete(int index1, int index2){
-    node *prev,*next;
-    prev = searchNode(head,index1 - 1);
-    next = searchNode(head, index2 + 1);
-    free(firstUndo);
-    //firstUndo->next = NULL;
-    firstUndo = NULL;
-    if(prev == NULL){
 
-        first = createStackNode(NULL,'d',index1,index2,first);
-    }
-    else{
-        first = createStackNode(prev->next, 'd', index1, index2, first);
+void delete(int index1, int index2) {
+    size_t len;
+    //free
+   // for (int i= index1;i<=index2; ++i){  //devo scalare gli indici?1,2
+   if(index1<= used){
 
-    }
-    /*if(debugUNDO){
-        undoPossible++;
-        printf("%d",undoPossible);
-    }*/
+        if(index2>used) {  //check the condition   index validi if index <= used if (index2<= used) this else used è il max
+            index2 = used;
+        }
+        for(int i= index1;i<=index2;++i)
+            len = strlen(text[i]);   //and others
 
-    prev->next = next;
+        memmove(text+index1,text+index2+1 ,len*sizeof(char));
+
+        //char** a = realloc(text,(--size) * sizeof(char*));
+        text = realloc(text,(size-(index2-index1+1)) * sizeof(char*));
+
+        //text = a;
+
+        //free(text[i]);
+        used -= (index2-index1+1);
+
+   }
+   //printf("%d",used);
 }
 
 void print(int index1, int index2){
-   node *initial = searchNode(head,index1);
-    for (int i = index1; i <=index2; ++i) {
-        if(initial == NULL || initial == head){
-            fputs(".\n",stdout);
+   if(index1>=0) {
+       for (int i = index1; i <= index2; ++i) {
+           //if doesnt exists (>= max numero valido )
+           if(i>used || i == 0){
+               fputs(".\n",stdout);
+           } else{
+               fputs(text[i],stdout);
+           }
 
-        } else{
-            fputs(initial->row,stdout);
-
-            initial = initial->next;
-        }
-
-    }
+       }
+   }
 
 }
 
 void undo(int nTimes){
-    node* prev, *next, *lastMem;
-    //leggo il first lo rimetto nella mia memoria e semmai lo sostituisco con uno nuovo
-
-    //ma per la d?! prendo first leggo dove andrebbe e scalo!!! quello dopo
-
-    for (int i = 0; i < nTimes; ++i) {
-
-        if(first!= NULL) {
-            if(first->instruction == 'c'){
-            prev = searchNode(head, first->index1 - 1);
-            //printf("%s\n", prev->row);
-
-            firstUndo = createStackNode(prev->next,'c', first->index1, first->index2, firstUndo);
-            /*if(debug){
-                printf("%s",prev->next->row);
-            }*/
-
-            next = searchNode(head, first->index2 + 1); // next
-            prev->next = first->mem;
-
-            //printf("qua?\n");
-
-            lastMem = searchNode(first->mem, first->index2 - first->index1);
-            if(lastMem!= NULL){
-                lastMem->next = next;
-            }
-
-            //printf("%s\n", lastMem->row); //?
-            //free?
-
-            }else if(first->instruction == 'd') {
-
-                prev = searchNode(head, first->index1 - 1);
-                next = prev->next;
-                //printf("%s\n", prev->row);
-
-                //printf("qua?\n");
-                firstUndo = createStackNode(prev->next, 'd', first->index1, first->index2, firstUndo);
-                /*if(debug){
-                    printf("%s",prev->next->row);
-                }*/
-
-                lastMem = searchNode(first->mem, first->index2 - first->index1);
-                if (lastMem != NULL) {
-                    lastMem->next = next; //check here
-                }
-                prev->next = first->mem;
-            }
-
-        first = first->next;
-            /*if(debugUNDO){
-                undoPossible--;
-                printf("%d",undoPossible);
-            }*/
-
-        }
-
-    }
 
 }
-//redo undo al prossimo c o d rimetto a 0 il first
 
 void redo(int nTimes){
-    node* prev, *next,*lastMem;
-    for (int i = 0; i < nTimes ; ++i) {
-
-        if (firstUndo != NULL) {
-            if (firstUndo->instruction == 'c') {
-                prev = searchNode(head, firstUndo->index1 - 1);
-                //printf("%s\n", prev->row);
-
-                next = searchNode(head, firstUndo->index2 + 1); // next
-
-                if(prev == NULL){
-
-                    first = createStackNode(NULL,'c',firstUndo->index1,firstUndo->index2,first);
-                }
-                else{
-                    first = createStackNode(prev->next, 'c', firstUndo->index1, firstUndo->index2, first);
-
-                }
-                prev->next = firstUndo->mem;
-
-                //printf("qua?\n");
-
-                lastMem = searchNode(firstUndo->mem, firstUndo->index2 - firstUndo->index1);
-               /*curr = redoList(head,firstUndo->index1,firstUndo->index2,next,firstUndo);
-
-               if(prev == head){
-                   head = curr;
-               } else{
-                   prev->next = curr;
-               }*/
-               // if(debugUNDO)
-                 //   printf("%s",lastMem->row);
-                if(lastMem != NULL) {
-                    lastMem->next = next;
-                } else{
-                    prev->next = lastMem;
-                }
-
-                //printf("%s\n", lastMem->row); //?
-                //free?
-
-                //rifare una lista?
-
-            } else if (firstUndo->instruction == 'd') {
-                prev = searchNode(head, firstUndo->index1 - 1);
-                next = searchNode(head, firstUndo->index2 + 1);
-                if(prev == NULL){
-
-                    first = createStackNode(NULL,'d',firstUndo->index1,firstUndo->index2,first);
-                }
-                else{
-                    first = createStackNode(prev->next, 'd', firstUndo->index1, firstUndo->index2, first);
-
-                }
-                prev->next = next;
-            }
-            firstUndo = firstUndo->next;
-            /*if(debugUNDO){
-                undoPossible++;
-                printf("%d",undoPossible);
-            }*/
-        }
-    }
 
 }
 
 
-node* searchNode(node *head_list,int index){
-    node* curr = head_list;
-    for (int i = 0; i < index && curr!= NULL; ++i) {
-        curr = curr->next;
-        /*if(debugUNDO){
-            printf("%d\n",i);
-        }*/
-    }
-    return curr;
-}
 
-node* createList(node* head_list,int index1,int index2,node* next){
-    node* myHead,*prev;
-    char row[ROWSIZE];
-    short code = 0;
 
-    if(index1 == 1){
-        myHead = (node*)malloc(sizeof(node));
-        code= 1;
-    } else{
-        myHead = searchNode(head_list, index1 - 1);
-    }
-    prev = myHead;
-    for (int i = index1; i <= index2; ++i) {   //search prev node -> next newNode etc
-        fgets(row, ROWSIZE, stdin);
-        node* newNode = (node *) malloc(sizeof(node));
-        strcpy(newNode->row, row);
-        newNode->next = NULL;
-        prev->next = newNode;
-        prev = prev->next;
-    }
-    prev->next = next;
-    if(code){
-        return myHead;
-    }
-    return myHead->next;
-}
 
-Stack_node* createStackNode(node* node,char instruction,int index1,int index2,Stack_node* stackNode){
-    Stack_node *new = (Stack_node*) malloc(sizeof(Stack_node));
-    new->index1 = index1;
-    new->index2 = index2;
-    new->instruction = instruction;
-    new->mem = node;
-   // if(stackNode == NULL){
-     //   stackNode = (Stack_node*)malloc(sizeof(Stack_node)); //?
-    //}
-    new->next = stackNode;
-    return new;
-}
+
+
+/*
+ * 1undo list
+ * 1changelist
+ *                  DELETE/CHANGE free undo list! and modify the change list
+ *
+ *                  for the CHANGE list logger (ind1,ind2,command) i parsed this like an input so i have a logger and a change list (arrays)
+ *                  for the UNDO list(array) better than a free of the array i can forbit the access to this and re write the memory (->free the string )
+ *                  just using a int to ensure that i dont redo something not useful
+ *
+ *
+ *
+ *
+ *                  COULD BE BETTER:
+ *                      initialized 1025 for every rows and then after some realloc
+ *
+ *
+ */
+
+
 
 
