@@ -2,7 +2,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-#define INITARRAY 30
+#define INITARRAY 100
 #define INPUTSIZE 1028
 
 
@@ -27,7 +27,7 @@
 
 char** text;
 char** memory;
-char** logger;
+// char** logger;
 char** undoList;
 
 char input[50];
@@ -99,7 +99,6 @@ int parsedInput();
 
 int main(){
     text = malloc(INITARRAY * sizeof(char*));
-  //  logger = malloc(INITARRAY * sizeof(char*));
     memory = malloc(INITARRAY * sizeof(char*));
     undoList = malloc(INITARRAY * sizeof(char*));
     nRowsUndo = malloc(INITARRAY * sizeof(int));
@@ -157,9 +156,9 @@ void parsing(char* command){
             index2 = index2*10 + (command[i]-offset);
         }
     }
-        inputLength = i;
-        decision = command[i];
-        operation(index1, index2, decision);
+    inputLength = i;
+    decision = command[i];
+    operation(index1, index2, decision);
 
 
 }
@@ -203,18 +202,21 @@ void changed(int index1,int index2) {
     }*/
     //TODO:free the UNDO STACK
     nUndoDone =0;
-
-    if(lastCommand == 1 ){
-        free(log1);
-        log1 = malloc(sizeof(log));
-        log1 = NULL;
-        lastCommand = 0;
-    }
-   /* for (int k = 0; k < lastUndo; ++k) {
-        free(undoList[k]);
-    }*/
-   // lastUndo = 0;
     lastIndexRedo=0;
+    if(lastIndexNRows ==0){
+       // free(log1);
+       // log1 =  malloc(sizeof(log));
+        log1 = NULL;
+       /* for (int i = 0; i < lastCommand; ++i) {
+            log *temp = (log*)  malloc(sizeof(log));
+            temp->next = NULL;
+            temp->prev = log1;
+            temp->index1 = 1;
+            temp->index2 = 1;
+            temp->op = 'n';
+            log1 = temp;
+        }*/
+    }
 
     //savingInput();   //for the undo and threat as a brand new input
     saveInput(index1,index2,'c');
@@ -231,7 +233,7 @@ void changed(int index1,int index2) {
             memorySize += INITARRAY;
             memory = realloc(memory,memorySize * sizeof(char*));
         }
-        if(lastIndexNRows+1 >= sizeNRows){
+        if(lastIndexNRows == sizeNRows){
             sizeNRows += INITARRAY;
             nRowsUndo = realloc(nRowsUndo, sizeNRows * sizeof(int ));
         }
@@ -251,7 +253,7 @@ void changed(int index1,int index2) {
             strcpy(memory[lastMemory],text[i]);
             ++sizeRows;
             ++lastMemory; //increase the Stack of the memory ( x UNDO)
-           // free(text[i]);
+            // free(text[i]);
         }
 
         // text = malloc(strlen(row) * sizeof(char));
@@ -288,57 +290,58 @@ void delete(int index1, int index2) {
     }*/
 
     nUndoDone =0;
-   //
-    if(lastCommand == 1 ){
-        free(log1);
-        log1 = malloc(sizeof(log));
+    lastIndexRedo=0;
+    if(lastIndexNRows ==0){
+        // free(log1);
+        // log1 =  malloc(sizeof(log));
         log1 = NULL;
-        lastCommand = 0;
+        /* for (int i = 0; i < lastCommand; ++i) {
+             log *temp = (log*)  malloc(sizeof(log));
+             temp->next = NULL;
+             temp->prev = log1;
+             temp->index1 = 1;
+             temp->index2 = 1;
+             temp->op = 'n';
+             log1 = temp;
+         }*/
     }
-   /*  for (int k = 0; k < lastUndo; ++k) {
-        free(undoList[k]);
-     }*/
-    // lastUndo=0;
-     lastIndexRedo=0;
-
-   //save something in case of delete unused
-   //NOP how to write it smart usage!!!
+    //save something in case of delete unused
+    //NOP how to write it smart usage!!!
 
     //savingInput();
     saveInput(index1,index2,'d');
 
-
     //printf("%d",used);
-    if(lastIndexNRows+1 >= sizeNRows){
+    if(lastIndexNRows == sizeNRows){
         sizeNRows += INITARRAY;
-        nRowsUndo = realloc(nRowsUndo, sizeNRows * sizeof(int));
+        nRowsUndo = realloc(nRowsUndo, sizeNRows * sizeof(int ));
     }
 
     if(index1 <= used && used > 0){
 
-       /*
-        * if(index1<=0){
-            index1 = 1;   //check if useful later  POSSO TOGLIERLO
-        }
-        */
+        /*
+         * if(index1<=0){
+             index1 = 1;   //check if useful later  POSSO TOGLIERLO
+         }
+         */
 
         if(index2 > used) {  //check the condition   index validi if index <= used if (index2<= used) this else used è il max
             lastIndex = used;
         }
 
-       if((lastMemory+used) >= memorySize){          //posso farlo all inizio e non ogni volta
-           memorySize += INITARRAY+used;
-           memory = realloc(memory,memorySize* sizeof(char *));
-       }
+        if((lastMemory+used) >= memorySize){          //posso farlo all inizio e non ogni volta
+            memorySize += INITARRAY+used;
+            memory = realloc(memory,memorySize* sizeof(char *));
+        }
 
-       //da index1 a lastindex salvo in mem
-       for (int j = index1; j <= lastIndex; ++j) {
-           lengthMemory = strlen(text[j])+2;
-           memory[lastMemory] = malloc(++lengthMemory);
-           strcpy(memory[lastMemory],text[j]);
-           ++lastMemory;
-           //free(text[j]);
-       }
+        //da index1 a lastindex salvo in mem
+        for (int j = index1; j <= lastIndex; ++j) {
+            lengthMemory = strlen(text[j])+2;
+            memory[lastMemory] = malloc(++lengthMemory);
+            strcpy(memory[lastMemory],text[j]);
+            ++lastMemory;
+            //free(text[j]);
+        }
 
 
         for(int i= lastIndex; i<= used;++i){    //index2 -> used
@@ -350,7 +353,7 @@ void delete(int index1, int index2) {
         //shiftare lo fa la memmove
 
 
-        memcpy(text+index1,text+lastIndex+1 ,len);//*sizeof(char));
+        memcpy(text+index1,text+lastIndex+1 ,len*sizeof(char));
 
 
         //char** a = realloc(text,(--size) * sizeof(char*));
@@ -359,20 +362,22 @@ void delete(int index1, int index2) {
         nRowsUndo[lastIndexNRows] = lastIndex - index1 + 1;
         //printf("%d",nRowsUndo[lastIndexNRows]);
         used -= (lastIndex-index1+1);
-   }else{
-       //savingInput(); same as but with n instead of d
-    //   logger[lastCommand-1][inputLength] = 'n';
-       //printf("%s\n",logger[lastCommand-1]);
-       log1->op = 'n';
-       nRowsUndo[lastIndexNRows]= 0;
-   }
+    }
+
+    else{
+        //savingInput(); same as but with n instead of d
+        //   logger[lastCommand-1][inputLength] = 'n';
+        //printf("%s\n",logger[lastCommand-1]);
+        log1->op = 'n';
+        nRowsUndo[lastIndexNRows]= 0;
+    }
     ++lastIndexNRows;
 }
 
 void print(int index1, int index2){
 
     if(nUndo != 0){
-       // printf("%d\n",lastIndexNRows);
+        // printf("%d\n",lastIndexNRows);
         if(nUndo > 0){
             //--lastCommand;
             undo(nUndo);
@@ -380,27 +385,29 @@ void print(int index1, int index2){
         } else{
             redo(nUndo);
             //++lastCommand;
-           // printf("QUIIII");
+            // printf("QUIIII");
         }
         //printf("%d\n",lastIndexNRows);
-       // printf("INIZ ");
+        // printf("INIZ ");
         nUndo=0;
-        //lastCommand = 0;
 
     }
-   //if(index1>=0) {
-   //printf("%d\n",used);
-       for (int i = index1; i <= index2; ++i) {
-           //if doesnt exists (>= max numero valido )
-           if(i>used || i <= 0){
-               fputs(".\n",stdout);
-           } else{
-               fputs(text[i],stdout);
-           }
+    //if(index1>=0) {
+    //printf("%d\n",used);
+    for (int i = index1; i <= index2; ++i) {
+        //if doesnt exists (>= max numero valido )
+        if(i>used || i <= 0){
+            fputs(".\n",stdout);
+        } else{
+            fputs(text[i],stdout);
+        }
 
-       //}
-   }
-   // printf("FINE ,%d\n",lastIndexNRows);
+        //}
+    }
+    if(debug){
+        printf("FINE ,%d\n",lastIndexNRows);
+    }
+
     /*for (int m = 0; m < lastMemory; ++m) {
         printf("%s\n",memory[m]);
     }
@@ -438,14 +445,13 @@ void undo(int nTimes){
         //decremento quanti
         // incremento quante redo
         incremento index x redo */
-
-        if(lastUndo + used  >= undoSize) {
-            undoSize += (INITARRAY + used) ;
-            undoList = realloc( undoList , undoSize * sizeof(char*));  //rethink
-        }
         len = 0;
         length = 0;
         len_t = 0;
+        if(lastUndo + used  >= undoSize) {
+            undoSize += INITARRAY+ used ;
+            undoList = realloc( undoList , undoSize * sizeof(char *));  //rethink
+        }
         if(lastIndexRedo  >= sizeNRowsRedo){
             sizeNRowsRedo += INITARRAY ;
             nRowsRedo = realloc(nRowsRedo, sizeNRowsRedo * sizeof(int));
@@ -470,7 +476,8 @@ void undo(int nTimes){
             printf("00000000");
         }*/
 
-    //    printf("%d , %d %c %d\n",intIndex[0],intIndex[1],instr,lastIndexNRows);
+        if (debug)
+            printf("%d , %d %c %d\n",intIndex[0],intIndex[1],instr,lastIndexNRows);
 
         //printf("\nQUI\n");
         if(lastMemory == 0){
@@ -480,24 +487,25 @@ void undo(int nTimes){
                 strcpy(undoList[lastUndo],text[j]);
                 lastUndo++;
             }
-            nRowsRedo[lastIndexRedo] = used;
+            redo = used;
             used=0;
-            log *temp1 = log1;
+            lastCommand = lastIndexNRows-1;
+           /* log *temp1 = log1;
             //guardi quanto manca e cicli di conseguenza tanto tutte le prossime istruzioni sono nulle
-            ++i;
-            lastIndexNRows--;
-            lastIndexRedo++;
-            while(i< nTimes){
-                if(temp1->prev != NULL){
-                    temp1 = temp1->prev;
-                }
+            //lastIndexNRows--;
+
+            //lastIndexRedo++;
+           // while(i< nTimes){
+              //  if(temp1->prev != NULL){
+                //    temp1 = temp1->prev;
+                //}
                 lastIndexRedo++;
                 nRowsRedo[lastIndexRedo] = 0;
-                lastIndexNRows--;
+              //  lastIndexNRows--;
                 ++i;
             }
-            log1 = temp1;
-            lastCommand = 1;
+
+            log1 = temp1;*/
             instr = 'n';
         }
 
@@ -523,21 +531,21 @@ void undo(int nTimes){
                 len += strlen(text[k])+2;
             }
 
-           // if(lastMemory != 0){
-                memcpy(temp,text+intIndex[1]+1,len);
-                memcpy(text + intIndex[0],memory +lastMemory,len_t);
-                memcpy(text+intIndex[1]+1,temp,len);
+            // if(lastMemory != 0){
+            memcpy(temp,text+intIndex[1]+1,len);
+            memcpy(text + intIndex[0],memory +lastMemory,len_t);
+            memcpy(text+intIndex[1]+1,temp,len);
 
 
             //}
-             /*else{
-                for (int j = 0; j < nRowsUndo[lastIndexNRows -1]; ++j) {
-                    length = strlen(memory[j])+2;
-                    //free(text[j+intIndex[0]]);
-                    text[j+intIndex[0]]= malloc(++length);
-                    strcpy(text[j+intIndex[0]],memory[j]);
-                }
-            }*/
+            /*else{
+               for (int j = 0; j < nRowsUndo[lastIndexNRows -1]; ++j) {
+                   length = strlen(memory[j])+2;
+                   //free(text[j+intIndex[0]]);
+                   text[j+intIndex[0]]= malloc(++length);
+                   strcpy(text[j+intIndex[0]],memory[j]);
+               }
+           }*/
 
 
 
@@ -559,15 +567,15 @@ void undo(int nTimes){
 
 
 
-         /*   if(lastIndexNRows == 1 || lastIndexNRows == 2 ){
-                for (int n = 0; n < 2; ++n) {
-                    fputs(memory[n],stdout);
-                }
-            }
+            /*   if(lastIndexNRows == 1 || lastIndexNRows == 2 ){
+                   for (int n = 0; n < 2; ++n) {
+                       fputs(memory[n],stdout);
+                   }
+               }
 
-            for (int l = 0; l < 1; l++) {
-                printf("2 -- %d : %s\n",l,logger[l]);
-            }*/
+               for (int l = 0; l < 1; l++) {
+                   printf("2 -- %d : %s\n",l,logger[l]);
+               }*/
 
 
             if(intIndex[1] == used){
@@ -585,11 +593,11 @@ void undo(int nTimes){
             for (int k = 0; k < nRowsUndo[lastIndexNRows -1]; ++k) {
                 --lastMemory;
                 len_t += strlen(memory[lastMemory])+2;
-               // text[intIndex[0]+k] = malloc(++len_t);
-             //   strcpy(text[intIndex[0]+k],memory[lastMemory]);
+                // text[intIndex[0]+k] = malloc(++len_t);
+                //   strcpy(text[intIndex[0]+k],memory[lastMemory]);
             }
             memcpy(text+intIndex[0],memory+ lastMemory,len_t);
-           // printf("%s    aaa",text[intIndex[0]]);
+            // printf("%s    aaa",text[intIndex[0]]);
             memcpy(text+intIndex[0]+nRowsUndo[lastIndexNRows -1],temp,length);
             used += nRowsUndo[lastIndexNRows -1];
             redo = nRowsUndo[lastIndexNRows -1];
@@ -597,17 +605,17 @@ void undo(int nTimes){
         }else if(instr =='n'){
             //DO NOTHING
         }
-      /*  if(lastIndexNRows==1){
-            used =0;
-        }*/
+        /*  if(lastIndexNRows==1){
+              used =0;
+          }*/
 
         //printf("%s\n",text[used+2]);
 
-        if(lastCommand != 1){
+      //  if(lastCommand != 1){
             nRowsRedo[lastIndexRedo] = redo;
             ++lastIndexRedo;
             --lastIndexNRows;
-        }
+     //   }
 
 
         /*if(1){
@@ -620,7 +628,7 @@ void undo(int nTimes){
 
 
         //printf("%d, %d",lastIndexNRows,nRowsUndo[lastIndexNRows]);
-       // printf(" ,%d , %d %d \n",lastMemory,lastCommand, used);
+        // printf(" ,%d , %d %d \n",lastMemory,lastCommand, used);
 
 
 
@@ -629,8 +637,8 @@ void undo(int nTimes){
 
 }
 
-void redo(int nTimes){
-    size_t len,length,len_t;
+void redo(int nTimes) {
+    size_t len, length, len_t;
     char command = 'n';
     /*for (int m = 0; m < lastMemory; ++m) {
         printf("%s\n",memory[m]);
@@ -638,7 +646,7 @@ void redo(int nTimes){
     for (int l = 0; l < lastCommand; ++l) {
         printf(" com:   %s\n",logger[l]);
     }*/
-   // printf("SSS %d",lastIndexRedo);
+    // printf("SSS %d",lastIndexRedo);
     /*for (int l = 0; l < lastUndo; ++l) {
         printf("UN: %s",undoList[l]);
     }*/
@@ -660,21 +668,28 @@ void redo(int nTimes){
 
 
 
-       // printf("%d",lastCommand);
+        // printf("%d",lastCommand);
 
         //++lastCommand;
-       /* for (int l = 0; l < 20; ++l) {
-                   printf("%s\n",logger[l]);
-               }*/
-       // printf("%d %d %d %d\n",lastIndexRedo,lastUndo,lastIndexNRows,lastCommand);
-       // printf("%d ",nRowsRedo[lastIndexRedo-1]);
+        /* for (int l = 0; l < 20; ++l) {
+                    printf("%s\n",logger[l]);
+                }*/
+        // printf("%d %d %d %d\n",lastIndexRedo,lastUndo,lastIndexNRows,lastCommand);
+        // printf("%d ",nRowsRedo[lastIndexRedo-1]);
+        if((lastMemory+used) >= memorySize){          //posso farlo all inizio e non ogni volta
+            memorySize += INITARRAY+used;
+            memory = realloc(memory,memorySize* sizeof(char *));
+        }
+        if(lastIndexNRows == sizeNRows){
+            sizeNRows += INITARRAY;
+            nRowsUndo = realloc(nRowsUndo, sizeNRows * sizeof(int ));
+        }
 
 
-    //    printf("\nquaaaaaack\n");
-        int undo=0;
+        int undo = 0;
         len = 0;
-        len_t =0;
-        if(lastIndexNRows == 0) {
+        len_t = 0;
+        if (lastIndexNRows == 0) {
             /* log *temp = log1;
              while (temp->prev != NULL){
                  temp = temp->prev;
@@ -682,34 +697,34 @@ void redo(int nTimes){
              log1 = temp;*/
             command = parsedMem();
             lastCommand = 0;
-        }else{
-             //if(log1->next != NULL )
-                 log1 = log1->next;
+        } else {// if(log1->next != NULL ){
 
-             command = parsedMem();
+            log1 = log1->next;
+            command = parsedMem();
+
         }
+            if (debug)
+         printf("\n%d %d %d %c ",i,intIndex[0],intIndex[1],command);
 
-    //    printf("\n%d %d %d %c ",i,intIndex[0],intIndex[1],command);
+        // char command = 'n';
+        if (command == 'c') {
+            for (int k = intIndex[0]; k <= intIndex[1]; ++k) {
 
-      // char command = 'n';
-        if(command == 'c'){
-            for (int k = intIndex[0]; k <= intIndex[1] ; ++k) {
-
-                if(k<= used){
-                    lengthMemory = strlen(text[k])+2;
-                    memory[lastMemory]= malloc(++lengthMemory);   //save the exact row in memory
-                    strcpy(memory[lastMemory],text[k]);
+                if (k <= used) {
+                    lengthMemory = strlen(text[k]) + 2;
+                    memory[lastMemory] = malloc(++lengthMemory);   //save the exact row in memory
+                    strcpy(memory[lastMemory], text[k]);
                     ++lastMemory; //increase the Stack of the memory ( x UNDO)
                     ++undo;
                 }
 
                 // free(text[k]);
                 --lastUndo;
-                len_t += strlen(undoList[lastUndo])+2;
+                len_t += strlen(undoList[lastUndo]) + 2;
             }
-          //  printf("%d",lastUndo);
-            for (int k = intIndex[1]+1; k <= used; ++k) {
-                len += strlen(text[k])+2;
+            //  printf("%d",lastUndo);
+            for (int k = intIndex[1] + 1; k <= used; ++k) {
+                len += strlen(text[k]) + 2;
             }
 
             /*if(lastUndo!=0){
@@ -717,129 +732,55 @@ void redo(int nTimes){
                 memcpy(text + intIndex[0],undoList +lastUndo,len_t);
                 memcpy(text+intIndex[1]+1,temp1,len);
             } else{*/
-                for (int j = 0; j < nRowsRedo[lastIndexRedo -1]; ++j) {
-                    length = strlen(undoList[j+lastUndo])+2;
-                    //free(text[j+intIndex[0]]);
-                    text[j+intIndex[0]]= malloc(++length);
-                    strcpy(text[j+intIndex[0]],undoList[j+lastUndo]);
-                }
-          //}
+            for (int j = 0; j < nRowsRedo[lastIndexRedo - 1]; ++j) {
+                length = strlen(undoList[j + lastUndo]) + 2;
+                //free(text[j+intIndex[0]]);
+                text[j + intIndex[0]] = malloc(++length);
+                strcpy(text[j + intIndex[0]], undoList[j + lastUndo]);
+            }
+            //}
 
 
-            if(intIndex[1] > used) {
+            if (intIndex[1] > used) {
                 used = intIndex[1];
             }
-           // undo = nRowsRedo[lastIndexRedo - 1];
-        } else if (command == 'd'){
+            // undo = nRowsRedo[lastIndexRedo - 1];
+        } else if (command == 'd') {
             int lastIndex = intIndex[1];
-            if(intIndex[1] > used){
+            if (intIndex[1] > used) {
                 lastIndex = used;
             }
 
-            for (int k = intIndex[0]; k <= lastIndex ; ++k) {
-                lengthMemory = (strlen(text[k]))+2;
+            for (int k = intIndex[0]; k <= lastIndex; ++k) {
+                lengthMemory = (strlen(text[k])) + 2;
                 memory[lastMemory] = malloc(++lengthMemory);
-                strcpy(memory[lastMemory],text[k]);
+                strcpy(memory[lastMemory], text[k]);
                 ++lastMemory;
                 //free(text[k]);
             }
 
             for (int j = lastIndex; j <= used; ++j) {
-                len+=strlen(text[j])+2;
-               // text[intIndex[0]+j-lastIndex]= malloc(++len);
-               // strcpy(text[intIndex[0]+j-lastIndex],text[j]);
+                len += strlen(text[j]) + 2;
+                // text[intIndex[0]+j-lastIndex]= malloc(++len);
+                // strcpy(text[intIndex[0]+j-lastIndex],text[j]);
             }
-            memcpy(text+intIndex[0],text+lastIndex+1,len);
+            memcpy(text + intIndex[0], text + lastIndex + 1, len);
 
-            undo = lastIndex-intIndex[0]+1;
+            undo = lastIndex - intIndex[0] + 1;
             //printf("%d",nRowsUndo[lastIndexNRows]);
-            used -= lastIndex-intIndex[0]+1;
-        } else if (command == 'n'){
-            //do nothing
+            used -= lastIndex - intIndex[0] + 1;
         }
 
         nRowsUndo[lastIndexNRows] = undo;
-       // printf("\n QUI\n");
+        // printf("\n QUI\n");
         lastIndexRedo--;
         ++lastIndexNRows;
 
+
     }
-
-
-
-
-
-        //printf("%c, %d , %d ,%d \n",command,intIndex[0],intIndex[1],nRowsUndo[lastIndexNRows-1]);
-      /*  if(command == 'c'){
-           // if(nRowsUndo[lastIndexNRows-1]==0){
-              /*  for(int j=0;j< used;++j){     //MORE EFFICIENT WAY DOING THE MEMMOVE AFTER
-                    lengthMemory = strlen(text[j]) * sizeof(char);
-                    memmove(memory + lastMemory, text + j, lengthMemory);
-                    ++lastMemory;
-                }
-                //used = 0;
-            //} else{
-           // printf("%d\n",nRowsUndo[lastIndexNRows - 1]);
-              //  for (int j = intIndex[0]; j < intIndex[0] + nRowsUndo[lastIndexNRows - 1]; ++j) {
-                //    if(used > 0){
-                      //  lengthMemory = strlen(text[j]) * sizeof(char);
-                        //undoList[lastUndo] = malloc(++lengthMemory);
-                        //memmove(memory + lastMemory, text + j, lengthMemory);  //qua riscrivo la mem ma non serve
-                        //   strcpy(undoList[lastUndo],text[j]);
-                        // free(text[j]);
-                       // --lastMemory;
-                    }
-
-                    length += strlen(undoList[lastUndo-1]);
-                    --lastUndo;
-                    //int index = lastMemory + intIndex[1] - intIndex[0] - 1;
-                    //if(strcmp(memory[index],".\n")==0){
-                    //  lastIndex = j;
-                    //}
-                    // length += strlen(memory[index]) * sizeof(char);  //lastmemory-1 -index2+index1
-                    //text[j] = malloc(++lengthText); // e se facessi memmove?!
-                    //strcpy(text[j],memory[index]);
-                    //--lastMemory;
-                    len+= strlen(text[j]);
-                    ++lastMemory;
-
-                }
-                if (intIndex[1] > used) {
-                    used = intIndex[1];
-                }
-                if(nRowsUndo[lastIndexNRows - 1]!=0){
-                    memmove(text + intIndex[0], memory + lastMemory , len);
-                    memmove(text + intIndex[0], undoList + lastUndo-1 , length);
-                }
-
-            //free(undoList + lastUndo); // basta o di piu?!
-
-        } else if( command == 'd'){
-            if(intIndex[1] > used){
-                intIndex[1] = used;
-            }
-            for (int j = intIndex[0]; j < used; ++j) {
-                len+=strlen(text[j])+2;
-                lengthMemory = (strlen(text[j]));
-                memory[lastMemory] = malloc(++lengthMemory);
-                strcpy(memory[lastMemory],text[j]);
-                ++lastMemory;
-            }
-            memmove(text+intIndex[0],text+intIndex[1]+1,len);
-
-            nRowsUndo[lastIndexNRows-1] = intIndex[1]-intIndex[0] +1;
-            //printf("%d",nRowsUndo[lastIndexNRows]);
-            used -= nRowsUndo[lastIndexNRows - 1];
-        }
-
-        //nUndoDone--;
-        //lastCommand++;
-    }*/
-
 }
-
 void savingInput(){
-    if(0){
+    /*if(0){
         if(lastCommand >= sizeLog){
             sizeLog += INITARRAY;
             logger = realloc(logger,sizeLog * sizeof(char*));
@@ -851,7 +792,7 @@ void savingInput(){
                 free(logger[i]);
             }
             maxCommand=lastCommand;
-        }*/
+        }
         lengthLog = inputLength+2;
         logger[lastCommand] = malloc (++lengthLog);
         strcpy(logger[lastCommand],input);
@@ -860,7 +801,7 @@ void savingInput(){
     } else{
 
 
-    }
+    }*/
 
 }
 
@@ -875,25 +816,25 @@ void incrementingUndo(int nTimes){
 void decrementingUndo(int nTimes){
     for (int i=0;nUndoDone > 0 && i< nTimes;i++){
         nUndo--;
-        //printf(" HowManyRE\n");
+        // printf(" HowManyRE\n");
         //print(1,3);
         nUndoDone--;
     }
-   // printf("%d\n",nUndo);
+    // printf("%d\n",nUndo);
 }
 
 void saveInput(int index1,int index2,char o){
 
-   log* newLog = (log*) malloc(sizeof(log));
-   newLog->index1 = index1;
-   newLog->index2 = index2;
-   newLog->op = o;
-   newLog->next = NULL;
-   newLog->prev = log1;
-   if(log1 != NULL){
-       log1->next = newLog;
-   }
-   log1=newLog;
+    log* newLog = (log*) malloc(sizeof(log));
+    newLog->index1 = index1;
+    newLog->index2 = index2;
+    newLog->op = o;
+    newLog->next = NULL;
+    newLog->prev = log1;
+    if(log1 != NULL){
+        log1->next = newLog;
+    }
+    log1=newLog;
 
 }
 
@@ -927,10 +868,10 @@ char parsedMem(){
 }
 
 int parsedInput(){
-  /*  int c = logger[--lastCommand];
-    intIndex[1]= logger[--lastCommand];
-    intIndex[0]= logger[--lastCommand];
-    return c;*/
+    /*  int c = logger[--lastCommand];
+      intIndex[1]= logger[--lastCommand];
+      intIndex[0]= logger[--lastCommand];
+      return c;*/
 }
 
 
@@ -1007,354 +948,6 @@ int parsedInput(){
  *      x undo
  *      se used > quanto ho in lista verifico xk ho la diff nel logger (intIndex[1] - intIndex[0])
  *       ---> used = quanto ho in lista e sostituisco
- *
- *
- *
- *
- *                  REDO
- *
- *                        ++lastCommand;
-
-        len = 0;
-        length = 0;
-        char command = parsedMem();
-        nRowsUndo[lastIndexNRows]= 0;
-        if(command == 'c'){
-            for (int j = 0; j < nRowsRedo[lastIndexRedo - 1]; ++j) {
-                lastUndo--;
-                len += strlen(undoList[lastUndo]);
-                length += strlen(text[j+intIndex[0]]);
-            }
-
-            memmove(memory+ lastMemory, text+ intIndex[0],length);
-            lastMemory += nRowsRedo[lastIndexRedo - 1];
-            memmove(text + intIndex[0],undoList + lastUndo,len);
-
-
-            if(intIndex[1] > used) {
-                used = intIndex[1];
-            }
-            nRowsUndo[lastIndexNRows] = nRowsRedo[lastIndexRedo - 1];
-        } else if (command == 'd'){
-            if(intIndex[1] > used){
-                intIndex[1] = used;
-            }
-            for (int k = intIndex[0]; k <= intIndex[1] ; ++k) {
-                lengthMemory = (strlen(text[k]));
-                memory[lastMemory] = malloc(++lengthMemory);
-                strcpy(memory[lastMemory],text[k]);
-                ++lastMemory;
-            }
-
-            for (int j = intIndex[1]; j <= used; ++j) {
-                len+=strlen(text[j]);
-            }
-            memmove(text+intIndex[0],text+intIndex[1]+1,len);
-
-            nRowsUndo[lastIndexNRows] = nRowsRedo[lastIndexRedo - 1];
-            //printf("%d",nRowsUndo[lastIndexNRows]);
-            used -= nRowsRedo[lastIndexRedo - 1];
-        }
-        lastIndexRedo--;
-        ++lastIndexNRows;
-
- *
- *              UNDO
- *
- *
- *                for(int i=0;i< nTimes;++i) {
-       // --lastCommand;
-        char decision = parsedMem();
-        len_tot = 0;
-        len=0;
-        length=0;
-        nRowsRedo[lastIndexRedo] = 0;
-        if (lastUndo + used  >= undoSize) {
-            undoSize += INITARRAY+ used ;
-            undoList = realloc( undoList , undoSize * sizeof(char *));  //rethink
-            //devo salvare i comandi eseguiti
-        }
-        // non devo risalvare l input quindi o var glob per farlo o nuova azione
-        if (decision == 'c') {
-            //change like
-
-            //salvare le cose che c erano prima nella undo list se non c'era nulla prima salvo i punti
-            //salvo tot elementi come nella delete e poi memmove
-            if(nRowsUndo[lastIndexNRows - 1] == 0){
-                for(int j=1;j<= used;++j){
-                    len += strlen(text[j]) * sizeof(char);
-                }
-                memmove(undoList + lastUndo, text + intIndex[0], len);
-                 //PROBL?
-                if(intIndex[0] == 1){
-                    nRowsRedo[lastIndexRedo] = used;
-                    lastUndo += used+1;
-                    used = 0;
-                } else{
-                    int howMany = intIndex[1] - intIndex[0]+1;
-                    nRowsRedo[lastIndexRedo] = howMany;
-                    lastUndo += howMany+1;
-                    used -= howMany;
-                }
-
-            }else {
-                for (int j = intIndex[0]; j <= intIndex[1]; ++j) {
-
-                        //ne metto intIndex[1]-intIndex[0] +1 in mem
-                        //ne sposto solo nRows...
-                        //cambio used
-
-
-                   if(j < intIndex[0] + nRowsUndo[lastIndexNRows - 1]){
-                       --lastMemory;
-                       len += strlen(memory[lastMemory]);//+2;
-                   }
-
-
-                    length += strlen(text[j]);//+2;// * sizeof(char);
-
-                      //possible improve
-                    //   strcpy(undoList[lastUndo],text[j]);
-                    // free(text[j]);
-
-
-                    //int index = lastMemory + intIndex[1] - intIndex[0] - 1;
-                    //if(strcmp(memory[index],".\n")==0){
-                    //  lastIndex = j;
-                    //}
-                   // length += strlen(memory[index]) * sizeof(char);  //lastmemory-1 -index2+index1
-                    //text[j] = malloc(++lengthText); // e se facessi memmove?!
-                    //strcpy(text[j],memory[index]);
-                    //--lastMemory;
-                }
-
-               //
-                memmove(text + intIndex[0], memory + lastMemory , len);
-                memmove(undoList + lastUndo, text + (intIndex[0]+nRowsUndo[lastIndexNRows -1]), length);
-                lastUndo += intIndex[1]-intIndex[0]+1;
-                //lastUndo++;
-                if(intIndex[1] >= used){
-                    int usable = intIndex[0] + nRowsUndo[lastIndexNRows -1]-1;
-                    if (usable < used) {
-                        used = usable;
-                    }
-                }
-                nRowsRedo[lastIndexRedo] = intIndex[1]-intIndex[0]+1;
-
-
-                //++lastMemory;
-            }
-        } else if(decision == 'd') {    //check lastindex and sooo
-
-            //problems with 1,1d
-
-            //salvo il comando che avrei fatto x es 1,3d
-            for(int k=0; k < nRowsUndo[lastIndexNRows - 1]; ++k){
-                //int index= lastMemory-1; -(k+1)
-                //printf("%d\n",nRowsUndo[lastIndexNRows-1]);
-                --lastMemory;
-                length += strlen(memory[lastMemory]);
-                  // devo fare free?
-            }      //quanti indirizzi devo leggere tra intIndex 0 e 1
-            //calcolo da index2 a fine la size e poi sposto
-
-                      //IDEA: UNISCO I CICLI!
-
-            for(l=intIndex[0];l<=used;++l){ //spostare i valori già utilizzati
-                len+= strlen(text[l]);
-                //printf("%d\n",lastIndex);
-               // printf("%d\n",lastIndexNRows);
-
-            }
-            if(len!=0){   // se già c era qualcosa a quell index
-                int index = intIndex[0] + nRowsUndo[lastIndexNRows - 1];
-               // printf("%d\n",index);
-                memmove(text+index ,text+intIndex[0],len*sizeof(char)); //sposto chi è negli index incriminati dopo
-               // printf("HERE?\n");
-               // printf("%d,%d\n",l,intIndex[0]);
-               // printf("%s\n",text[index]);
-
-            }
-
-            //printf("%s",memory[lastMemory-1]);
-            //printf("%d", lastMemory);  //errore
-            //printf("%s\n",memory[index]);
-            memmove(text+intIndex[0],memory+lastMemory,length*sizeof(char));
-            //printf("%s\n",text[intIndex[0]]);
-
-            //++lastMemory;
-
-            //salvo gli elementi in quelle posizioni sempre nell undo list
-            //memmove like a inverse delete from indice attuale to index2+1(last index che potrebbe non essere index2)
-            //memmove dalla memoria a quegli indici
-
-            nRowsRedo[lastIndexRedo] = nRowsUndo[lastIndexNRows -1];
-
-            used += nRowsUndo[lastIndexNRows - 1];  //check
-            //printf("%d\n",nRowsUndo[lastIndexNRows-1]);
-        }
-        //decremento l indice degli input
-        //--lastIndexNRows;
-        --lastCommand;
-        //++lastUndo;
-       // nUndoDone++;
-       --lastIndexNRows;
-        ++lastIndexRedo;
-        printf("%d",lastIndexNRows);
-        printf(" ,%d , %d %d \n",lastMemory,lastCommand, used);
-    }
- *
- *
- *
- *
- *undo con liste carico in una lista i valori da cambiare
- *
- *
- *
- * void undo(int nTimes){
-    int l;
-    size_t length,len;
-
-    //CHECK THE USED!!!!    improve!!!!
-    if(lastIndexRedo+nTimes+1 >=  sizeNRowsRedo){
-        sizeNRowsRedo+= INITARRAY+nTimes;
-        nRowsRedo =  realloc(nRowsRedo, sizeNRowsRedo * sizeof(int));
-    }
-
-for(int i=0;i< nTimes;++i) {
-char decision = parsedMem();
-len=0;
-length=0;
-nRowsRedo[lastIndexRedo] = 0;
-if (lastUndo + used  >= undoSize) {
-undoSize += INITARRAY+ used ;
-undoList = realloc( undoList , undoSize * sizeof(char *));  //rethink
-//devo salvare i comandi eseguiti
-}
-// non devo risalvare l input quindi o var glob per farlo o nuova azione
-if (decision == 'c') {
-//change like
-
-//salvare le cose che c erano prima nella undo list se non c'era nulla prima salvo i punti
-//salvo tot elementi come nella delete e poi memmove
-if(nRowsUndo[lastIndexNRows - 1] == 0){
-for(int j=intIndex[0];j<= used;++j){
-len = strlen(text[j])+2; //* sizeof(char);
-undoList[lastUndo] = malloc(++len);
-strcpy(undoList[lastUndo],text[j]);
-++lastUndo;
-}
-//PROBL?
-if(intIndex[0] == 1){
-nRowsRedo[lastIndexRedo] = used;
-used = 0;
-} else{
-int howMany = intIndex[1] - intIndex[0]+1;
-nRowsRedo[lastIndexRedo] = howMany;
-used -= howMany;
-}
-
-}else {
-for (int j = intIndex[0]; j <= intIndex[1]; ++j) {
-
-//ne metto intIndex[1]-intIndex[0] +1 in mem
-//ne sposto solo nRows...
-//cambio used
-
-if(j < intIndex[0] + nRowsUndo[lastIndexNRows - 1]){
---lastMemory;
-len += strlen(memory[lastMemory])+2;//+2;
-}
-
-
-length = strlen(text[j])+2;//+2;// * sizeof(char);
-undoList[lastUndo] = malloc(++length);
-strcpy(undoList[lastUndo],text[j]);
-++lastUndo;
-
-//possible improve
-//   strcpy(undoList[lastUndo],text[j]);
-// free(text[j]);
-
-
-//int index = lastMemory + intIndex[1] - intIndex[0] - 1;
-//if(strcmp(memory[index],".\n")==0){
-//  lastIndex = j;
-//}
-// length += strlen(memory[index]) * sizeof(char);  //lastmemory-1 -index2+index1
-//text[j] = malloc(++lengthText); // e se facessi memmove?!
-//strcpy(text[j],memory[index]);
-//--lastMemory;
-}
-
-memmove(text + intIndex[0], memory + lastMemory , len);
-
-if(intIndex[1] >= used){   //rethink
-int usable = intIndex[0] + nRowsUndo[lastIndexNRows -1]-1;
-if (usable < used) {
-used = usable;
-}
-}
-nRowsRedo[lastIndexRedo] = intIndex[1]-intIndex[0]+1;
-
-
-//++lastMemory;
-}
-} else if(decision == 'd') {    //check lastindex and sooo
-
-//problems with 1,1d
-
-//salvo il comando che avrei fatto x es 1,3d
-for(int k=0; k < nRowsUndo[lastIndexNRows - 1]; ++k){
-//int index= lastMemory-1; -(k+1)
-//printf("%d\n",nRowsUndo[lastIndexNRows-1]);
---lastMemory;
-length += strlen(memory[lastMemory])+2;
-// devo fare free?
-}      //quanti indirizzi devo leggere tra intIndex 0 e 1
-//calcolo da index2 a fine la size e poi sposto
-
-//IDEA: UNISCO I CICLI!
-
-for(l=intIndex[0];l<=used;++l){ //spostare i valori già utilizzati
-len+= strlen(text[l])+2;
-//printf("%d\n",lastIndex);
-// printf("%d\n",lastIndexNRows);
-
-}
-if(len!=0){   // se già c era qualcosa a quell index
-int index = intIndex[0] + nRowsUndo[lastIndexNRows - 1];
-memmove(text+index ,text+intIndex[0],len*sizeof(char)); //sposto chi è negli index incriminati dopo
-}
-
-memmove(text+intIndex[0],memory+lastMemory,length*sizeof(char));
-//printf("%s\n",text[intIndex[0]]);
-
-//++lastMemory;
-
-//salvo gli elementi in quelle posizioni sempre nell undo list
-//memmove like a inverse delete from indice attuale to index2+1(last index che potrebbe non essere index2)
-//memmove dalla memoria a quegli indici
-
-nRowsRedo[lastIndexRedo] = nRowsUndo[lastIndexNRows -1];
-
-used += nRowsUndo[lastIndexNRows - 1];  //check
-//printf("%d\n",nRowsUndo[lastIndexNRows-1]);
-}
-//decremento l indice degli input
-//--lastIndexNRows;
---lastCommand;
-//++lastUndo;
-// nUndoDone++;
---lastIndexNRows;
-++lastIndexRedo;
-printf("%d",lastIndexNRows);
-printf(" ,%d , %d %d %d\n",lastMemory,lastCommand, used,lastUndo);
-}
-
-
-
-}
  *
  *
  *
